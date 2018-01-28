@@ -46,6 +46,7 @@
 #include <iostream>
 #include <dlib/image_transforms.h>
 #include <fstream>
+#include "grpc_stuff.cpp"
 using namespace dlib;
 using namespace std;
 using namespace cv;
@@ -110,6 +111,10 @@ int main() {
         image_window win;
         while(!win.is_closed())
 #else
+        StateClient state_client (grpc::CreateChannel(
+            "localhost:50051", 
+            grpc::InsecureChannelCredentials()
+        ));
         while(true)
 #endif
         {
@@ -155,6 +160,9 @@ int main() {
               if (speed == 0) {
                 cout << "*" << std::flush;
               } else {
+#ifdef ON_PI
+                state_client.speed_limit_update(speed);
+#endif
                 cout << endl << speed << endl;
               }
             } else {
@@ -174,5 +182,3 @@ int main() {
         cout << e.what() << endl;
     }
 }
-
-

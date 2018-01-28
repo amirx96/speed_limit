@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+message SpeedLimitUpdate {
+  uint64 time = 1;
+  double speed_limit = 2;
+}
+
+message SpeedUpdate {
+  uint64 time = 1;
+  double speed = 2;
+}
+
+message Status {
+  uint32 code = 1;
+}
+
+service State {
+  rpc speed_limit_update(SpeedLimitUpdate) returns (Status) {}
+  rpc speed_update(SpeedUpdate) returns (Status) {}
+}
