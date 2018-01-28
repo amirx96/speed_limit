@@ -26,10 +26,11 @@
     instructions.  Note that AVX is the fastest but requires a CPU from at least
     2011.  SSE4 is the next fastest and is supported by most current machines.  
 */
-//#define ON_PI
+#define ON_PI
 
 #include <dlib/opencv.h>
 #include <opencv2/highgui/highgui.hpp>
+#include <stdexcept>
 #ifndef ON_PI
 #include <dlib/gui_widgets.h>
 #endif
@@ -50,14 +51,28 @@ using namespace std;
 using namespace cv;
 using namespace cv::text;
 
-int i = 0;
+string escape(string input) {
+  string output;
+  for (int j = 0; j < input.length(); ++j) {
+    if ('\n' == input[j]) {
+      output.push_back('\\');
+      output.push_back('n');
+      } else if ('\t' == input[j]) {
+        output.push_back('\\');
+        output.push_back('t');
+      } else {
+        output.push_back(input[j]);
+      }
+  }
+  return output;
+}
 
-int get_speed(string ocr_output)
+int get_speed(string input)
 {
   string numbers;
-  for (int j = 0; j < ocr_output.length(); ++j) {
-    if ('0' < ocr_output[j] && ocr_output[j] < '9') {
-      numbers.push_back(ocr_output[j]);
+  for (int j = 0; j < input.length(); ++j) {
+    if ('0' <= input[j] && input[j] <= '9') {
+      numbers.push_back(input[j]);
     }
   }
   int speed = atoi(numbers.c_str());
@@ -68,39 +83,32 @@ int get_speed(string ocr_output)
   }
 }
 
-int main()
-{
-    
-    try
-    {
+int main() {
+    try {
         cv::VideoCapture cap(0);
-        if (!cap.isOpened())
-        {
-            cerr << "Unable to connect to camera" << endl;
-            return 1;
+        if (!cap.isOpened()) {
+          throw runtime_error("Unable to connect to camera");
         }
 
-#ifndef ON_PI
-        image_window win;
-#endif
         //use pyramid down scanner
         typedef scan_fhog_pyramid<pyramid_down<1> > image_scanner_type;
 
-
-        
        // frontal_face_detector detector = get_frontal_face_detector();
         shape_predictor pose_model;
         object_detector<image_scanner_type> detector;
     
-    // look for the object_detector.svm
-      std::ifstream fin("object_detector.svm",std::ios::binary); 
-      deserialize(detector,fin);
+        // look for the object_detector.svm
+        std::ifstream fin ("object_detector.svm", std::ios::binary); 
+        deserialize(detector,fin);
 
-      Ptr<OCRTesseract> ocr = OCRTesseract::create();
+        std::ofstream log ("strings.out");
+
+        Ptr<OCRTesseract> ocr = OCRTesseract::create();
 
         // Grab and process frames until the main window is closed by the user.
 #ifndef ON_PI
-      while(!win.is_closed())
+        image_window win;
+        while(!win.is_closed())
 #else
         while(true)
 #endif
@@ -118,37 +126,40 @@ int main()
             cv_image<rgb_pixel> cimg(temp);
 
             // Detect speed limit sign
-
-
-           std::vector<dlib::rectangle> rects = detector(cimg);
+            std::vector<dlib::rectangle> rects = detector(cimg);
             array2d<unsigned char> t_image;
             array2d<unsigned char> cropped_image;
 
-
-            // Display it all on the screen
 #ifndef ON_PI
+            // Display it all on the screen
             win.clear_overlay();
 #endif
-            if( rects.size() > 0) {
-                extract_image_chip(cimg,rects[0],cropped_image);
+            if (rects.size() > 0) {
+              // get rectangle of sign
+              extract_image_chip(cimg,rects[0],cropped_image);
+
+              // up scale image
+              pyramid_up(cropped_image);
+
 #ifndef ON_PI
-                win.set_image(cropped_image);
+              win.set_image(cropped_image);
 #endif
 
-                Mat cropped_mat (toMat(cropped_image));
-                string ocr_output;
-                ocr->run(cropped_mat, ocr_output);
+              Mat cropped_mat (toMat(cropped_image));
+              string ocr_output;
+              ocr->run(cropped_mat, ocr_output);
 
-                int speed = get_speed(ocr_output);
-                if (speed != 0) {
-                  cout << "*";
-                } else {
-                  cout << endl << speed << endl;
-                }
+              log << escape(ocr_output) << std::endl;
+
+              int speed = get_speed(ocr_output);
+              if (speed == 0) {
+                cout << "*" << std::flush;
+              } else {
+                cout << endl << speed << endl;
+              }
             } else {
-              cout << ".";
+              cout << "." << std::flush;
             }
-        //    win.add_overlay(rects,rgb_pixel(0,255,0));
         }
     }
     catch(serialization_error& e)
