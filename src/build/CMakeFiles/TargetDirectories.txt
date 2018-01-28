@@ -1,6 +1,0 @@
-/home/amirtamuhack/Desktop/speed_limit/src/build/CMakeFiles/edit_cache.dir
-/home/amirtamuhack/Desktop/speed_limit/src/build/CMakeFiles/rebuild_cache.dir
-/home/amirtamuhack/Desktop/speed_limit/src/build/CMakeFiles/train_object_detector.dir
-/home/amirtamuhack/Desktop/speed_limit/src/build/dlib_build/CMakeFiles/edit_cache.dir
-/home/amirtamuhack/Desktop/speed_limit/src/build/dlib_build/CMakeFiles/rebuild_cache.dir
-/home/amirtamuhack/Desktop/speed_limit/src/build/dlib_build/CMakeFiles/dlib.dir

@@ -26,13 +26,18 @@
     instructions.  Note that AVX is the fastest but requires a CPU from at least
     2011.  SSE4 is the next fastest and is supported by most current machines.  
 */
+//#define ON_PI
 
 #include <dlib/opencv.h>
 #include <opencv2/highgui/highgui.hpp>
+#ifndef ON_PI
+#include <dlib/gui_widgets.h>
+#endif
+#include <opencv2/core/cvstd.hpp>
+#include <opencv2/text/ocr.hpp>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing/render_face_detections.h>
 #include <dlib/image_processing.h>
-#include <dlib/gui_widgets.h>
 #include <dlib/svm_threaded.h>
 #include <dlib/string.h>
 #include <dlib/data_io.h>
@@ -42,6 +47,10 @@
 #include <fstream>
 using namespace dlib;
 using namespace std;
+using namespace cv;
+using namespace cv::text;
+
+int i = 0;
 
 int main()
 {
@@ -55,7 +64,9 @@ int main()
             return 1;
         }
 
+#ifndef ON_PI
         image_window win;
+#endif
         //use pyramid down scanner
         typedef scan_fhog_pyramid<pyramid_down<1> > image_scanner_type;
 
@@ -69,9 +80,14 @@ int main()
       std::ifstream fin("object_detector.svm",std::ios::binary); 
       deserialize(detector,fin);
 
-    
+      Ptr<OCRTesseract> ocr = OCRTesseract::create();
+
         // Grab and process frames until the main window is closed by the user.
-        while(!win.is_closed())
+#ifndef ON_PI
+      while(!win.is_closed())
+#else
+        while(true)
+#endif
         {
             // Grab a frame
             cv::Mat temp;
@@ -93,13 +109,27 @@ int main()
            std::vector<dlib::rectangle> rects = detector(cimg);
             array2d<unsigned char> t_image;
             array2d<unsigned char> cropped_image;
-           
-   
-            // // Display it all on the screen
+
+
+            // Display it all on the screen
+#ifndef ON_PI
             win.clear_overlay();
+#endif
             if( rects.size() > 0) {
-            extract_image_chip(cimg,rects[0],cropped_image);
-            win.set_image(cropped_image);
+                extract_image_chip(cimg,rects[0],cropped_image);
+#ifndef ON_PI
+                win.set_image(cropped_image);
+#endif
+
+                Mat cropped_mat (toMat(cropped_image));
+                string ocr_output;
+                ocr->run(cropped_mat, ocr_output);
+
+                cout << "hit [" << ocr_output << "]" << endl;
+            } else {
+if (i++ % 50 == 0) {
+                cout << "miss" << endl;
+                }
             }
         //    win.add_overlay(rects,rgb_pixel(0,255,0));
         }
