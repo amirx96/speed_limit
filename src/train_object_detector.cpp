@@ -52,6 +52,22 @@ using namespace cv::text;
 
 int i = 0;
 
+int get_speed(string ocr_output)
+{
+  string numbers;
+  for (int j = 0; j < ocr_output.length(); ++j) {
+    if ('0' < ocr_output[j] && ocr_output[j] < '9') {
+      numbers.push_back(ocr_output[j]);
+    }
+  }
+  int speed = atoi(numbers.c_str());
+  if (speed % 5 == 0 && 5 <= speed && speed <= 85) {
+    return speed;
+  } else {
+    return 0;
+  }
+}
+
 int main()
 {
     
@@ -91,10 +107,8 @@ int main()
         {
             // Grab a frame
             cv::Mat temp;
-            if (!cap.read(temp))
-            {
-                break;
-            }
+            cap.read(temp);
+
             // Turn OpenCV's Mat into something dlib can deal with.  Note that this just
             // wraps the Mat object, it doesn't copy anything.  So cimg is only valid as
             // long as temp is valid.  Also don't do anything to temp that would cause it
@@ -125,11 +139,14 @@ int main()
                 string ocr_output;
                 ocr->run(cropped_mat, ocr_output);
 
-                cout << "hit [" << ocr_output << "]" << endl;
-            } else {
-if (i++ % 50 == 0) {
-                cout << "miss" << endl;
+                int speed = get_speed(ocr_output);
+                if (speed != 0) {
+                  cout << "*";
+                } else {
+                  cout << endl << speed << endl;
                 }
+            } else {
+              cout << ".";
             }
         //    win.add_overlay(rects,rgb_pixel(0,255,0));
         }
