@@ -34,7 +34,7 @@
 #ifndef ON_PI
 #include <dlib/gui_widgets.h>
 #endif
-#include <opencv2/core/cvstd.hpp>
+//#include <opencv2/core/cvstd.hpp>
 #include <opencv2/text/ocr.hpp>
 #include <dlib/image_processing/frontal_face_detector.h>
 #include <dlib/image_processing/render_face_detections.h>
